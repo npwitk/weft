@@ -37,6 +37,16 @@ export const STYLES = [
     evenSpacing: true,
   },
   {
+    id: "stretch",
+    name: "Pinwake, by stretch",
+    inspiredBy: "How Pinwake's Bangkok was drawn: each stretch between interchanges is one straight run with at most one bend, stations evenly along it",
+    step: 45,
+    // Only interchanges move; stretches can't zigzag (see stretches.js).
+    weights: { angle: 6, length: 2, diagonal: 3, bend: 2.5, relative: 4 },
+    solver: "stretches",
+    drawing: "stretch",
+  },
+  {
     id: "grid",
     name: "Grid",
     inspiredBy: "Massimo Vignelli's New York subway (1972): right angles only",

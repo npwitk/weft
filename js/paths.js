@@ -100,7 +100,9 @@ function shapedPaths(state, t, shape) {
       if (k === 0) { points.push(P[a]); stationVertex.push(0); continue; }
       const prev = line.stops[k - 1];
       let piece = trackPiece(net, line, k - 1, P[prev], P[a], t * U * 1.5);
-      if (shape > 0 && style.drawing === "dogleg") {
+      if (shape > 0 && style.drawing === "stretch") {
+        piece = state.pieces?.get(`${prev}|${a}`) || [P[prev], P[a]];
+      } else if (shape > 0 && style.drawing === "dogleg") {
         const bend = dogleg(P[prev], P[a], style.step, incoming);
         if (bend) {
           const mid = { x: (P[prev].x + P[a].x) / 2, y: (P[prev].y + P[a].y) / 2 };

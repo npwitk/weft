@@ -36,7 +36,7 @@ const arrow = (x, y) => `<path d="M${x} ${y}h18m-6 -5l6 5l-6 5" fill="none" stro
 
 function hero() {
   const net = load("berlin");
-  const W = 1600, H = 620, top = 150, gapX = 40;
+  const W = 1600, H = 520, top = 40, gapX = 40;
   const steps = [
     ["geographic", 0, "Real map", "0%"],
     ["octilinear", 0.55, "Simplifying", "55%"],
@@ -44,8 +44,7 @@ function hero() {
     ["pinwake", 1, "Pinwake", "level runs, even spacing"],
   ];
   const w = (W - 112 - gapX * 3) / 4, h = H - top - 80;
-  let body = text(56, 78, 44, INK, "Weft", `font-weight="700" letter-spacing="-0.5"`);
-  body += text(56, 114, 19, MUTED, "Berlin U-Bahn, from the real map to schematic, in the styles of famous metro maps");
+  let body = "";
   steps.forEach(([style, t, title, sub], k) => {
     const x = 56 + k * (w + gapX);
     body += panel(net, style, t, x, top, w, h);
@@ -57,16 +56,20 @@ function hero() {
 }
 
 function pinwake() {
-  const net = load("bangkok");
-  const W = 1600, H = 820, top = 110, gapX = 60;
-  const w = (W - 112 - gapX) / 2, h = H - top - 70;
-  let body = text(56, 64, 30, INK, "Bangkok: drawn by hand, and by the Pinwake style", `font-weight="700"`);
-  [["hand", "Hand-traced in Pinwake"], ["pinwake", "Pinwake style, automatic"]].forEach(([style, title], k) => {
-    const x = 56 + k * (w + gapX);
-    body += panel(net, style, 1, x, top, w, h);
-    body += text(x + 6, H - 28, 19, INK, title, `font-weight="600"`);
+  const W = 1600, cols = 3, gapX = 40, rowH = 520, top = 40;
+  const H = top + 2 * (rowH + 50);
+  const w = (W - 112 - gapX * (cols - 1)) / cols;
+  let body = "";
+  const columns = [["hand", "Drawn by hand in Pinwake"], ["pinwake", "Pinwake style"], ["stretch", "Pinwake, by stretch"]];
+  ["bangkok", "singapore"].forEach((city, r) => {
+    const net = load(city);
+    const y = top + r * (rowH + 50);
+    columns.forEach(([style, title], k) => {
+      const x = 56 + k * (w + gapX);
+      body += panel(net, style, 1, x, y, w, rowH - 10);
+      body += text(x + 6, y + rowH + 22, 17, k ? MUTED : INK, `${city === "bangkok" ? "Bangkok" : "Singapore"} · ${title}`, k ? "" : `font-weight="600"`);
+    });
   });
-  body += `<line x1="${W / 2}" y1="${top}" x2="${W / 2}" y2="${H - 60}" stroke="${LINE}" stroke-width="1.5"/>`;
   return svg(W, H, body);
 }
 
@@ -74,9 +77,9 @@ function gallery() {
   const names = ["bangkok", "singapore", "berlin", "chicago", "freiburg", "stuttgart", "sydney", "wien"];
   const titles = { bangkok: "Bangkok", singapore: "Singapore", berlin: "Berlin", chicago: "Chicago", freiburg: "Freiburg",
                    stuttgart: "Stuttgart", sydney: "Sydney", wien: "Vienna" };
-  const cols = 4, cell = 370, gap = 24, head = 84;
+  const cols = 4, cell = 370, gap = 24, head = 24;
   const W = cols * cell + (cols + 1) * gap, rows = Math.ceil(names.length / cols), H = head + rows * (cell + 44) + 6;
-  let body = text(gap + 4, 54, 28, INK, "Eight networks in the Pinwake style", `font-weight="700"`);
+  let body = "";
   names.forEach((name, k) => {
     const x = gap + (k % cols) * (cell + gap), y = head + Math.floor(k / cols) * (cell + 44);
     body += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="14" fill="none" stroke="${LINE}" stroke-width="1.5"/>`;

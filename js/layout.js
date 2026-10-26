@@ -15,6 +15,7 @@
 // Moves that create a crossing the real network doesn't have are refused.
 
 import { dist, mean, segmentsCross, pointSegment } from "./network.js";
+import { createStretches, solveStretches } from "./stretches.js";
 
 /// Passes over which the angle rule fades in after the slider moves.
 const ANGLE_RAMP_PASSES = 40;
@@ -58,12 +59,15 @@ export function createLayout(net, style) {
   };
   // A fixed style (Pinwake's hand-traced map) never moves.
   const fixed = Boolean(style.fixed);
-  return {
+  const state = {
     net, style, centre, geoCross,
     triples: [...triples.values()], bendsTouching,
     positions: stations.map((s) => ({ ...(fixed ? s.ref : s.geo) })),
     t: null, step: 0, converged: fixed,
   };
+  // Styles laid out by stretch move only interchanges (stretches.js).
+  if (style.solver === "stretches") createStretches(state);
+  return state;
 }
 
 const sharesEnd = (e, f) => e.a === f.a || e.a === f.b || e.b === f.a || e.b === f.b;
@@ -75,6 +79,7 @@ export function solve(state, t, passes = 1) {
   const { net } = state;
   const U = net.unit;
   if (state.style.fixed) return true;
+  if (state.stretches) return solveStretches(state, t, passes);
   if (state.t !== t) {
     state.t = t;
     state.step = U * 0.35;

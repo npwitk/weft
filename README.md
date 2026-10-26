@@ -58,6 +58,7 @@ address, so your private key never reaches the browser.
 | Geographic | the real track | straightened as the slider moves |
 | Octilinear | Harry Beck's London (1933), most official maps today | 0°/45°/90°, even spacing, straight runs |
 | Pinwake | Pinwake's hand-traced Bangkok | octilinear, but mostly level and upright, few bends, stations evenly spaced between interchanges |
+| Pinwake, by stretch | how that map was drawn | only interchanges move; each stretch between them is one straight run with at most one bend |
 | Grid | Massimo Vignelli's New York (1972) | right angles only |
 | Hexalinear | Max Roberts' 60° designs | 0°/60°/120° |
 | Curvy | Max Roberts' curvilinear maps | smooth curves, even spacing |
@@ -66,7 +67,7 @@ address, so your private key never reaches the browser.
 
 ### The Pinwake style
 
-![Bangkok drawn by hand in Pinwake, next to the automatic Pinwake style](docs/pinwake.svg)
+![Bangkok and Singapore drawn by hand in Pinwake, next to the Pinwake and Pinwake-by-stretch styles](docs/pinwake.svg)
 
 Learned from measuring Pinwake's hand-traced Bangkok:
 - **Direction:** 77% of its track is level or upright, so diagonals cost extra.
@@ -79,7 +80,36 @@ Every style is drawn in Pinwake's look:
 - one white pill per interchange, holding a dot per line
 - ordinary stations shown only once there's room.
 
-The hand-drawn version is still cleaner. Closing that gap is the point of the lab.
+**Pinwake, by stretch** (`js/stretches.js`) copies how the hand-drawn map
+was *made*, not just its look:
+- **Stretches:** the network is cut into stretches between pins. Pins are
+  interchanges, line ends, walkway stations, and the points where the real
+  track turns sharply. That last test is Douglas–Peucker on the stations:
+  a stretch whose stations stray far from its chord is split.
+- **Pins only:** only pins move. Each stretch is one straight run at
+  0°/45°/90°, or two runs joined by one bend, so it can't zigzag.
+- **Even spacing:** stations are spaced evenly along each stretch.
+- **Bend direction:** a stretch's bend flips the other way when that avoids
+  crossing another line.
+
+On Singapore this is the closest of all styles to the hand-drawn map
+(1.24–1.29 station gaps off, against 1.68 for Octilinear). Bangkok's outer
+lines still come out as long diagonals where the hand-drawn map runs them
+level.
+
+The next steps are planned:
+- **Solve exactly:** choose each stretch's direction with a mixed-integer
+  program, after Nöllenburg & Wolff, instead of local search.
+- **Learn weights:** fit the weights to the hand-drawn Bangkok, then check
+  them on Singapore.
+
+### Known issues
+
+- **Crossings:** "Pinwake, by stretch" still adds a crossing or two in
+  Singapore, Berlin and Vienna, and Grid adds one in Bangkok. The tests pin
+  these counts so they can't grow.
+- **Crowded centres:** dense city centres stay crowded, because real maps
+  also enlarge the middle.
 
 ## How it works
 

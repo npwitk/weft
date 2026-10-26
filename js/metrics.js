@@ -67,17 +67,42 @@ export function measure(state, paths) {
   out.spread = meanGap ? sd / meanGap : 0;
   const ownUnit = median(gaps) || 1;
 
-  // Crossings between station-to-station edges that the real map lacks.
-  let crossings = 0;
+  // New crossings: for each pair of lines, how many more times they cross
+  // as drawn than in reality. Two lines that really cross once may cross
+  // once on the map between other stations; that's not a new crossing.
   const E = net.edges;
+  const edgeIndex = new Map(E.map((e, i) => [`${e.a}|${e.b}`, i]));
+  const drawnEdge = new Array(E.length);
+  for (const { line, points, stationVertex } of paths) {
+    for (let k = 1; k < stationVertex.length; k++) {
+      const a = line.stops[k - 1], b = line.stops[k];
+      const i = edgeIndex.get(a < b ? `${a}|${b}` : `${b}|${a}`);
+      if (i != null && !drawnEdge[i]) drawnEdge[i] = points.slice(stationVertex[k - 1], stationVertex[k] + 1);
+    }
+  }
+  const real = new Map(), drawn = new Map();
+  const tally = (map, e, f) => {
+    for (const l1 of e.lines) for (const l2 of f.lines) {
+      if (l1 === l2) continue;
+      const key = l1 < l2 ? `${l1}|${l2}` : `${l2}|${l1}`;
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+  };
   for (let i = 0; i < E.length; i++) {
     for (let j = i + 1; j < E.length; j++) {
       const e = E[i], f = E[j];
       if (e.a === f.a || e.a === f.b || e.b === f.a || e.b === f.b) continue;
-      if (state.geoCross.has(`${i}|${j}`)) continue;
-      if (segmentsCross(P[e.a], P[e.b], P[f.a], P[f.b])) crossings++;
+      if (state.geoCross.has(`${i}|${j}`)) tally(real, e, f);
+      const p = drawnEdge[i] || [P[e.a], P[e.b]], q = drawnEdge[j] || [P[f.a], P[f.b]];
+      let hit = false;
+      for (let x = 0; x + 1 < p.length && !hit; x++) {
+        for (let y = 0; y + 1 < q.length && !hit; y++) hit = segmentsCross(p[x], p[x + 1], q[y], q[y + 1]);
+      }
+      if (hit) tally(drawn, e, f);
     }
   }
+  let crossings = 0;
+  for (const [key, n] of drawn) crossings += Math.max(0, n - (real.get(key) || 0));
   out.crossings = crossings;
 
   let crowding = 0;
